@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-
+"""Convert a Python dictionary to XML using lxml."""
 
 import datetime
 import logging
-from collections import OrderedDict
 from typing import Any
 
 from lxml import etree
@@ -12,44 +9,45 @@ from lxml import etree
 logger = logging.getLogger("dict2xml")
 
 
-class Dict2XML(object):
+class Dict2XML:
     """
-    Converts a Python dictionary to XML using the lxml.etree library
-    For more info on see: http://lxml.de/tutorial.html
+    Converts a Python dictionary to XML using the lxml.etree library.
+    For more info see: http://lxml.de/tutorial.html
     """
     _xml = None
 
     def __init__(self, root_node_name, dictionary, force_cdata=False):
         """
-        Converts a Python dictionary to XML using the lxml.etree library
         :param root_node_name: name of the root node
         :param dictionary: instance of a dict object that needs to be converted
-        :param force_cdata: if true, all the text nodes will be wrapped in <!CDATA[[ ]]>
+        :param force_cdata: if true, all text nodes will be wrapped in <![CDATA[ ]]>
         """
         self._xml = etree.Element(root_node_name)
         self._convert(self._xml, dictionary, force_cdata=force_cdata)
 
     def to_xml_string(self, encoding='UTF-8', pretty_print=True, xml_declaration=True):
         """
-        Convert the etree object into string
-        :param encoding: specify the encoding for the XML String. Default 'UTF-8'
-        :param pretty_print: pretty print the XML wth indentation. Default True
-        :param xml_declaration: Print the XML Declaration tag in the output. Default True
-        :return: XML string
+        Convert the etree object to an XML byte string.
+
+        :param encoding: encoding for the XML output. Default 'UTF-8'
+        :param pretty_print: pretty print the XML with indentation. Default True
+        :param xml_declaration: include the XML declaration tag. Default True
+        :return: XML as bytes
         """
         return etree.tostring(self._xml, xml_declaration=xml_declaration, pretty_print=pretty_print,
                               encoding=encoding, method='xml')
 
     def get_etree_object(self):
+        """Return the underlying lxml.etree.Element."""
         return self._xml
 
     def _convert(self, node, value, force_cdata=False):
         """
-        Recursively traverse the dictionary to convert it to an XML
+        Recursively traverse the dictionary to convert it to XML.
+
         :param node: the parent XML node
-        :param value: value of the Node
-        :param force_cdata: if true, all the text nodes will be wrapped in <!CDATA[[ ]]>
-        :return: None
+        :param value: value of the node
+        :param force_cdata: if true, all text nodes will be wrapped in <![CDATA[ ]]>
         """
         logger.debug("Parent Tag {} {}".format(node.tag, self._to_string(node)))
         logger.debug("Value {}".format(value))
@@ -74,9 +72,9 @@ class Dict2XML(object):
                 sub_node = etree.SubElement(node, key)
                 self._convert(sub_node, val, force_cdata)
         elif isinstance(value, list):
-            # array of nodes
+            # remove the placeholder node and recreate as sibling elements
             tag = node.tag
-            parent = node.getparent()  # remove the current code as we will recreate an array of nodes below
+            parent = node.getparent()
             parent.remove(node)
             for val in value:
                 sub_node = etree.SubElement(parent, tag)
@@ -91,15 +89,21 @@ class Dict2XML(object):
     @staticmethod
     def _to_string(node):
         """
-        Helper method to pretty print xml nodes
-        :param node: etree XML Node to be printed.
-        :return: string
+        Pretty print an XML node for debug logging.
+
+        :param node: etree XML node to be printed
+        :return: XML as bytes
         """
         return etree.tostring(node, xml_declaration=False, pretty_print=True, encoding='UTF-8', method='xml')
 
     @staticmethod
     def _serialize_value(value: Any):
-        """Returns the serialized value to be used in XML"""
+        """
+        Serialize a Python value for use in XML text or attributes.
+
+        :param value: the value to serialize
+        :return: string representation
+        """
         if isinstance(value, bool):
             return 'true' if value else 'false'
         if isinstance(value, type(None)):
