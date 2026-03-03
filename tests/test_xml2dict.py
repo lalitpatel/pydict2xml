@@ -146,3 +146,53 @@ class TestEdgeCases:
         result = XML2Dict(xml).to_dict()
         assert isinstance(result["a"], list)
         assert result["b"] == "2"
+
+    def test_attributes_text_and_children(self):
+        # node with attributes, text, and children (mixed content)
+        xml = b'<root id="1">hello<child>world</child></root>'
+        result = XML2Dict(xml).to_dict()
+        assert result["@attributes"]["id"] == "1"
+        assert result["@text"] == "hello"
+        assert result["child"] == "world"
+
+
+class TestInvalidXml:
+    def test_invalid_xml_raises(self):
+        import pytest
+        with pytest.raises(etree.XMLSyntaxError):
+            XML2Dict(b"<not valid xml")
+
+    def test_empty_bytes_raises(self):
+        import pytest
+        with pytest.raises(etree.XMLSyntaxError):
+            XML2Dict(b"")
+
+
+class TestNamespaces:
+    def test_namespaced_elements(self):
+        # ns_clean removes redundant namespace declarations but URIs remain in tag names
+        xml = b'<root xmlns:ns="http://example.com"><ns:child>value</ns:child></root>'
+        result = XML2Dict(xml).to_dict()
+        assert "{http://example.com}child" in result
+        assert result["{http://example.com}child"] == "value"
+
+    def test_default_namespace(self):
+        xml = b'<root xmlns="http://example.com"><child>value</child></root>'
+        result = XML2Dict(xml).to_dict()
+        assert "{http://example.com}child" in result
+
+
+class TestOrderedDictNested:
+    def test_ordered_dict_propagates_to_children(self):
+        xml = b"<root><parent><child>value</child></parent></root>"
+        result = XML2Dict(xml).to_dict(ordered_dict=True)
+        assert isinstance(result, OrderedDict)
+        assert isinstance(result["parent"], OrderedDict)
+
+
+class TestVersion:
+    def test_version_is_accessible(self):
+        import pydict2xml
+        assert hasattr(pydict2xml, "__version__")
+        assert isinstance(pydict2xml.__version__, str)
+        assert len(pydict2xml.__version__) > 0

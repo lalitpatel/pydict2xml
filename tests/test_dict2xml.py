@@ -280,3 +280,60 @@ class TestEdgeCases:
         data = {"@text": 3.14}
         result = _xml_string("node", data)
         assert result == "<node>3.14</node>"
+
+    def test_empty_list(self):
+        data = {"book": []}
+        result = _xml_string("books", data)
+        # empty list produces no child elements
+        root = etree.fromstring(result.encode())
+        assert root.findall("book") == []
+
+    def test_single_item_list(self):
+        data = {"book": ["1984"]}
+        result = _xml_string("books", data)
+        root = etree.fromstring(result.encode())
+        books = root.findall("book")
+        assert len(books) == 1
+        assert books[0].text == "1984"
+
+    def test_cdata_overwrites_text(self):
+        # when both @text and @cdata are present, @cdata wins (processed second)
+        data = {"@text": "plain", "@cdata": "wrapped"}
+        result = _xml_string("node", data)
+        assert "<![CDATA[wrapped]]>" in result
+        assert "plain" not in result
+
+
+class TestForceCdata:
+    def test_force_cdata_on_child_text(self):
+        data = {"book": "1984"}
+        result = _xml_string("books", data, force_cdata=True)
+        assert "<![CDATA[1984]]>" in result
+
+    def test_force_cdata_on_list_children(self):
+        data = {"book": ["1984", "Foundation"]}
+        result = _xml_string("books", data, force_cdata=True)
+        assert result.count("<![CDATA[") == 2
+
+    def test_force_cdata_with_cdata_key(self):
+        # @cdata key + force_cdata should both produce CDATA
+        data = {"title": {"@cdata": "Foundation"}}
+        result = _xml_string("book", data, force_cdata=True)
+        assert "<![CDATA[Foundation]]>" in result
+
+
+class TestPrettyPrint:
+    def test_pretty_print_true(self):
+        data = {"book": "1984"}
+        result = Dict2XML("books", data).to_xml_string(
+            xml_declaration=False, pretty_print=True
+        ).decode("UTF-8")
+        assert "\n" in result
+        assert "  <book>" in result
+
+    def test_pretty_print_false(self):
+        data = {"book": "1984"}
+        result = Dict2XML("books", data).to_xml_string(
+            xml_declaration=False, pretty_print=False
+        ).decode("UTF-8")
+        assert "\n" not in result
