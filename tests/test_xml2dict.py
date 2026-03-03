@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
-from pydict2xml import Dict2XML, XML2Dict
+from py_dict_xml import Dict2XML, XML2Dict
 
 
 class TestSimpleElements:
@@ -218,7 +218,7 @@ class TestOrderedDictNested:
 
 class TestVersion:
     def test_version_is_accessible(self):
-        import pydict2xml
-        assert hasattr(pydict2xml, "__version__")
-        assert isinstance(pydict2xml.__version__, str)
-        assert len(pydict2xml.__version__) > 0
+        import py_dict_xml
+        assert hasattr(py_dict_xml, "__version__")
+        assert isinstance(py_dict_xml.__version__, str)
+        assert len(py_dict_xml.__version__) > 0
