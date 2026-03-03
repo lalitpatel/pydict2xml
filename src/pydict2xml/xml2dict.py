@@ -1,11 +1,8 @@
 """Convert XML to a Python dictionary using lxml."""
 
-import logging
 from collections import OrderedDict
 
 from lxml import etree
-
-logger = logging.getLogger("xml2dict")
 
 
 class XML2Dict:
@@ -13,7 +10,6 @@ class XML2Dict:
     Converts XML to a Python dictionary using the lxml.etree library.
     For more info see: http://lxml.de/tutorial.html
     """
-    _xml = None
 
     def __init__(self, xml, ns_clean=True):
         """
@@ -44,7 +40,6 @@ class XML2Dict:
         :param ordered_dict: if True, use OrderedDict
         :return: dict, OrderedDict, or string for text-only nodes
         """
-        logger.debug("Parent Tag {} {}".format(node.tag, self._to_string(node)))
         xml_dict = OrderedDict() if ordered_dict else {}
 
         # add attributes and text nodes
@@ -63,7 +58,7 @@ class XML2Dict:
 
             # flatten single-element lists
             for key, value in xml_dict.items():
-                if type(value) == list and len(value) == 1:
+                if isinstance(value, list) and len(value) == 1:
                     xml_dict[key] = value[0]
 
         # flatten the dict if it just has the @text key
@@ -71,13 +66,3 @@ class XML2Dict:
             xml_dict = xml_dict['@text']
 
         return xml_dict
-
-    @staticmethod
-    def _to_string(node):
-        """
-        Pretty print an XML node for debug logging.
-
-        :param node: etree XML node to be printed
-        :return: XML as bytes
-        """
-        return etree.tostring(node, xml_declaration=False, pretty_print=True, encoding='UTF-8', method='xml')

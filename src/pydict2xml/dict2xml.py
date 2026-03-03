@@ -1,12 +1,9 @@
 """Convert a Python dictionary to XML using lxml."""
 
 import datetime
-import logging
 from typing import Any
 
 from lxml import etree
-
-logger = logging.getLogger("dict2xml")
 
 
 class Dict2XML:
@@ -14,7 +11,6 @@ class Dict2XML:
     Converts a Python dictionary to XML using the lxml.etree library.
     For more info see: http://lxml.de/tutorial.html
     """
-    _xml = None
 
     def __init__(self, root_node_name, dictionary, force_cdata=False):
         """
@@ -22,6 +18,8 @@ class Dict2XML:
         :param dictionary: instance of a dict object that needs to be converted
         :param force_cdata: if true, all text nodes will be wrapped in <![CDATA[ ]]>
         """
+        if not isinstance(dictionary, dict):
+            raise TypeError(f"dictionary must be a dict, got {type(dictionary).__name__}")
         self._xml = etree.Element(root_node_name)
         self._convert(self._xml, dictionary, force_cdata=force_cdata)
 
@@ -49,26 +47,21 @@ class Dict2XML:
         :param value: value of the node
         :param force_cdata: if true, all text nodes will be wrapped in <![CDATA[ ]]>
         """
-        logger.debug("Parent Tag {} {}".format(node.tag, self._to_string(node)))
-        logger.debug("Value {}".format(value))
         if isinstance(value, dict):
+            value = dict(value)  # shallow copy to avoid mutating caller's dict
             if '@attributes' in value:
-                logger.debug("Found @attributes")
                 attributes = value.pop('@attributes')
                 for key in attributes.keys():
                     attributes[key] = self._serialize_value(attributes[key])
                 node.attrib.update(attributes)
             if '@text' in value:
-                logger.debug("Found @text")
                 if force_cdata:
                     node.text = etree.CDATA(self._serialize_value(value.pop('@text')))
                 else:
                     node.text = self._serialize_value(value.pop('@text'))
             if '@cdata' in value:
-                logger.debug("Found @cdata")
                 node.text = etree.CDATA(self._serialize_value(value.pop('@cdata')))
             for key, val in value.items():
-                logger.debug('Creating sub node ' + key)
                 sub_node = etree.SubElement(node, key)
                 self._convert(sub_node, val, force_cdata)
         elif isinstance(value, list):
@@ -87,16 +80,6 @@ class Dict2XML:
                 node.text = self._serialize_value(value)
 
     @staticmethod
-    def _to_string(node):
-        """
-        Pretty print an XML node for debug logging.
-
-        :param node: etree XML node to be printed
-        :return: XML as bytes
-        """
-        return etree.tostring(node, xml_declaration=False, pretty_print=True, encoding='UTF-8', method='xml')
-
-    @staticmethod
     def _serialize_value(value: Any):
         """
         Serialize a Python value for use in XML text or attributes.
@@ -106,7 +89,7 @@ class Dict2XML:
         """
         if isinstance(value, bool):
             return 'true' if value else 'false'
-        if isinstance(value, type(None)):
+        if value is None:
             return ''
         if isinstance(value, datetime.datetime):
             return value.isoformat()

@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from lxml import etree
 
-from pydict2xml import XML2Dict
+from pydict2xml import Dict2XML, XML2Dict
 
 
 class TestSimpleElements:
@@ -75,8 +75,6 @@ class TestOrderedDict:
 
 class TestRoundTrip:
     def test_round_trip(self):
-        from pydict2xml import Dict2XML
-
         original = {
             "@attributes": {"type": "fiction"},
             "book": [
@@ -84,7 +82,7 @@ class TestRoundTrip:
                 {"title": "Foundation", "isbn": "57352342132"},
             ],
         }
-        xml_bytes = Dict2XML("books", original.copy()).to_xml_string(xml_declaration=False)
+        xml_bytes = Dict2XML("books", original).to_xml_string(xml_declaration=False)
         result = XML2Dict(xml_bytes).to_dict()
         assert result["@attributes"]["type"] == "fiction"
         assert isinstance(result["book"], list)
@@ -125,3 +123,26 @@ class TestComplexXml:
         assert result["book"][1]["title"] == "Foundation"
         assert result["book"][2]["price"]["@attributes"]["discount"] == "10%"
         assert result["book"][2]["price"]["@text"] == "$18.00"
+
+
+class TestEdgeCases:
+    def test_special_characters(self):
+        xml = b"<node>Tom &amp; Jerry</node>"
+        result = XML2Dict(xml).to_dict()
+        assert result == "Tom & Jerry"
+
+    def test_unicode(self):
+        xml = "<node>日本語</node>".encode("utf-8")
+        result = XML2Dict(xml).to_dict()
+        assert result == "日本語"
+
+    def test_deeply_nested(self):
+        xml = b"<a><b><c><d>deep</d></c></b></a>"
+        result = XML2Dict(xml).to_dict()
+        assert result["b"]["c"]["d"] == "deep"
+
+    def test_mixed_children_types(self):
+        xml = b"<root><a>1</a><b>2</b><a>3</a></root>"
+        result = XML2Dict(xml).to_dict()
+        assert isinstance(result["a"], list)
+        assert result["b"] == "2"

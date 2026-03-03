@@ -1,6 +1,8 @@
+import copy
 import datetime
 from collections import OrderedDict
 
+import pytest
 from lxml import etree
 
 from pydict2xml import Dict2XML
@@ -177,3 +179,104 @@ class TestXmlDeclaration:
     def test_without_declaration(self):
         result = Dict2XML("root", {}).to_xml_string(xml_declaration=False).decode("UTF-8")
         assert not result.startswith("<?xml")
+
+
+class TestInputNotMutated:
+    def test_dict_not_mutated(self):
+        data = {
+            "@attributes": {"type": "fiction"},
+            "@text": "hello",
+            "child": "value",
+        }
+        original = copy.deepcopy(data)
+        _xml_string("root", data)
+        assert data == original
+
+    def test_nested_dict_not_mutated(self):
+        data = {
+            "book": {
+                "@attributes": {"author": "Orwell"},
+                "@cdata": "1984",
+            }
+        }
+        original = copy.deepcopy(data)
+        _xml_string("books", data)
+        assert data == original
+
+    def test_list_children_not_mutated(self):
+        data = {
+            "@attributes": {"type": "fiction"},
+            "book": [
+                {"@attributes": {"id": "1"}, "title": "1984"},
+                {"@attributes": {"id": "2"}, "title": "Foundation"},
+            ],
+        }
+        original = copy.deepcopy(data)
+        _xml_string("books", data)
+        assert data == original
+
+    def test_can_convert_same_dict_twice(self):
+        data = {
+            "@attributes": {"type": "fiction"},
+            "book": "1984",
+        }
+        result1 = _xml_string("books", data)
+        result2 = _xml_string("books", data)
+        assert result1 == result2
+
+
+class TestInputValidation:
+    def test_non_dict_raises_type_error(self):
+        with pytest.raises(TypeError, match="dictionary must be a dict"):
+            Dict2XML("root", "not a dict")
+
+    def test_none_raises_type_error(self):
+        with pytest.raises(TypeError, match="dictionary must be a dict"):
+            Dict2XML("root", None)
+
+    def test_list_raises_type_error(self):
+        with pytest.raises(TypeError, match="dictionary must be a dict"):
+            Dict2XML("root", [1, 2, 3])
+
+
+class TestEdgeCases:
+    def test_special_xml_characters_in_text(self):
+        data = {"@text": '<script>alert("xss")</script>'}
+        result = _xml_string("node", data)
+        root = etree.fromstring(result.encode())
+        assert root.text == '<script>alert("xss")</script>'
+        assert "<script>" not in result  # should be escaped
+
+    def test_ampersand_in_text(self):
+        data = {"@text": "Tom & Jerry"}
+        result = _xml_string("title", data)
+        root = etree.fromstring(result.encode())
+        assert root.text == "Tom & Jerry"
+
+    def test_unicode_values(self):
+        data = {"@text": "日本語テスト"}
+        result = _xml_string("node", data)
+        root = etree.fromstring(result.encode())
+        assert root.text == "日本語テスト"
+
+    def test_deeply_nested_dict(self):
+        data = {"a": {"b": {"c": {"d": "deep"}}}}
+        result = _xml_string("root", data)
+        root = etree.fromstring(result.encode())
+        assert root.find(".//d").text == "deep"
+
+    def test_empty_string_text(self):
+        data = {"@text": ""}
+        result = _xml_string("node", data)
+        # lxml distinguishes between no text (self-closing) and empty text
+        assert result == "<node></node>"
+
+    def test_integer_value(self):
+        data = {"@text": 42}
+        result = _xml_string("node", data)
+        assert result == "<node>42</node>"
+
+    def test_float_value(self):
+        data = {"@text": 3.14}
+        result = _xml_string("node", data)
+        assert result == "<node>3.14</node>"
