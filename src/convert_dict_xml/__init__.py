@@ -1,4 +1,4 @@
-"""py-dict-xml - Convert Python dicts to XML and back."""
+"""convert-dict-xml - Convert Python dicts to XML and back."""
 
 __version__ = "1.0.0"
 

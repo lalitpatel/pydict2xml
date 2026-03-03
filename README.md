@@ -1,7 +1,7 @@
-# py-dict-xml
+# convert-dict-xml
 
-[![PyPI version](https://img.shields.io/pypi/v/py-dict-xml)](https://pypi.org/project/py-dict-xml/)
-[![Python versions](https://img.shields.io/pypi/pyversions/py-dict-xml)](https://pypi.org/project/py-dict-xml/)
+[![PyPI version](https://img.shields.io/pypi/v/convert-dict-xml)](https://pypi.org/project/convert-dict-xml/)
+[![Python versions](https://img.shields.io/pypi/pyversions/convert-dict-xml)](https://pypi.org/project/convert-dict-xml/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Convert Python dicts to XML and back using [lxml](https://lxml.de/). Supports attributes and CDATA.
@@ -16,7 +16,7 @@ Convert Python dicts to XML and back using [lxml](https://lxml.de/). Supports at
 ## Installation
 
 ```bash
-pip install py-dict-xml
+pip install convert-dict-xml
 ```
 
 > **Note:** Requires [lxml](https://lxml.de/installation.html), which needs `libxml2` and `libxslt` system libraries on some platforms.
@@ -26,7 +26,7 @@ pip install py-dict-xml
 ### Dict to XML
 
 ```python
-from py_dict_xml import Dict2XML
+from convert_dict_xml import Dict2XML
 
 data = {
     '@attributes': {'type': 'fiction'},
@@ -46,7 +46,7 @@ print(xml.decode())
 ### XML to Dict
 
 ```python
-from py_dict_xml import XML2Dict
+from convert_dict_xml import XML2Dict
 
 result = XML2Dict(xml).to_dict()
 # {'@attributes': {'type': 'fiction'}, 'book': ['1984', 'Foundation']}
@@ -159,7 +159,7 @@ print(xml.decode())
 
 ```python
 from collections import OrderedDict
-from py_dict_xml import Dict2XML
+from convert_dict_xml import Dict2XML
 
 books = OrderedDict({
     '@attributes': {'type': 'fiction'},
@@ -237,8 +237,8 @@ print(xml.decode()
 ## Contributing
 
 ```bash
-git clone https://github.com/lalitpatel/py-dict-xml.git
-cd py-dict-xml
+git clone https://github.com/lalitpatel/convert-dict-xml.git
+cd convert-dict-xml
 pip install -e ".[dev]"
 pytest
 ```

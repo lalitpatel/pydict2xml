@@ -5,7 +5,7 @@ from collections import OrderedDict
 import pytest
 from lxml import etree
 
-from py_dict_xml import Dict2XML
+from convert_dict_xml import Dict2XML
 
 
 def _xml_string(root_name, data, force_cdata=False):

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "py-dict-xml"
+name = "convert-dict-xml"
 dynamic = ["version"]
 description = "Convert Python dicts to XML and back using lxml"
 readme = "README.md"
@@ -37,12 +37,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/lalitpatel/py-dict-xml"
-Repository = "https://github.com/lalitpatel/py-dict-xml"
-Issues = "https://github.com/lalitpatel/py-dict-xml/issues"
+Homepage = "https://github.com/lalitpatel/convert-dict-xml"
+Repository = "https://github.com/lalitpatel/convert-dict-xml"
+Issues = "https://github.com/lalitpatel/convert-dict-xml/issues"
 
 [tool.hatch.version]
-path = "src/py_dict_xml/__init__.py"
+path = "src/convert_dict_xml/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
